@@ -25,3 +25,4 @@
 
 #include "app.h"
 #include "input.h"
+#include "render.h"

@@ -2,193 +2,298 @@
 
 void AppTest::init()
 {
-	HRESULT r;
+	rend_init();
+	this->initShader();
+	this->initBuffer();
 
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	SDL_GetWindowWMInfo(app_getWindow(), &info);
+	D3D11_RASTERIZER_DESC rastDesc = {};
+	rastDesc.AntialiasedLineEnable = false;
+	rastDesc.CullMode = D3D11_CULL_NONE;
+	rastDesc.DepthBias = 0;
+	rastDesc.DepthBiasClamp = 0.0f;
+	rastDesc.DepthClipEnable = true;
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.FrontCounterClockwise = false;
+	rastDesc.MultisampleEnable = false;
+	rastDesc.ScissorEnable = false;
+	rastDesc.SlopeScaledDepthBias = 0.0f;
 
-	// Swap Chain, Device, Context
-	DXGI_SWAP_CHAIN_DESC desc = {};
-	desc.BufferCount = 1;
-
-	desc.BufferDesc.Width = app_getWidth();
-	desc.BufferDesc.Height = app_getHeight();
-	desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.BufferDesc.RefreshRate.Numerator = 0;
-	desc.BufferDesc.RefreshRate.Denominator = 1;
-	desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
-	desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-
-	desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-
-	desc.OutputWindow = info.info.win.window;
-
-	desc.SampleDesc.Count = 1;
-	desc.SampleDesc.Quality = 0;
-
-	desc.Windowed = TRUE;
-
-	desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
-	desc.Flags = 0;
-
-	// Create SwapChain, Device, and Context
-	r = D3D11CreateDeviceAndSwapChain(
-		nullptr,
-		D3D_DRIVER_TYPE_HARDWARE,
-		nullptr,
-		0,
-		nullptr,
-		0,
-		D3D11_SDK_VERSION,
-		&desc,
-		&swapChain,
-		&device,
-		nullptr,
-		&context
+	HRESULT r = rend_getDevice()->CreateRasterizerState(
+		&rastDesc,
+		&this->rastState
 	);
 
-	if (FAILED(r))
-	{
-		throw std::runtime_error("");
-	}
-
-	// Render Target View
-	ID3D11Texture2D* backBuffer = nullptr;
-
-	r = swapChain->GetBuffer(
-		0,
-		__uuidof(ID3D11Texture2D),
-		(void**)&backBuffer
-	);
-
-	if (FAILED(r))
-	{
-		throw std::runtime_error("");
-	}
-
-	r = device->CreateRenderTargetView(
-		backBuffer,
-		nullptr,
-		&this->renderTargetView
-	);
-
-	if (FAILED(r))
-	{
-		throw std::runtime_error("");
-	}
-
-	if (backBuffer)
-	{
-		backBuffer->Release();
-	}
-
-	// Depth Buffer Desc
-	D3D11_TEXTURE2D_DESC depthBufferDesc = {};
-	depthBufferDesc.Width = app_getWidth();
-	depthBufferDesc.Height = app_getHeight();
-	depthBufferDesc.MipLevels = 1;
-	depthBufferDesc.ArraySize = 1;
-	depthBufferDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthBufferDesc.SampleDesc.Count = 1;
-	depthBufferDesc.SampleDesc.Quality = 0;
-	depthBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthBufferDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthBufferDesc.CPUAccessFlags = 0;
-	depthBufferDesc.MiscFlags = 0;
-
-	r = device->CreateTexture2D(
-		&depthBufferDesc,
-		nullptr,
-		&this->depthBuffer
-	);
-
-	if (FAILED(r))
-	{
-		throw std::runtime_error("");
-	}
-
-	D3D11_DEPTH_STENCIL_DESC depthStencilDesc = {};
-	depthStencilDesc.DepthEnable = true;
-	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-	depthStencilDesc.DepthFunc = D3D11_COMPARISON_LESS;
-	depthStencilDesc.StencilEnable = false;
-
-	r = device->CreateDepthStencilState(&depthStencilDesc, &depthState);
-
-	if (FAILED(r))
-	{
-		throw std::runtime_error("");
-	}
-
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthViewDesc = {};
-	depthViewDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	depthViewDesc.Texture2D.MipSlice = 0;
-
-	r = device->CreateDepthStencilView(
-		depthBuffer,
-		&depthViewDesc,
-		&depthView
-	);
-
-	if (FAILED(r))
-	{
-		std::runtime_error("");
-	}
-
-	context->OMSetDepthStencilState(depthState, 1);
-	context->OMSetRenderTargets(1, &renderTargetView, this->depthView);
-
-
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = app_getWidth();
+	viewport.Height = app_getHeight();
+	viewport.MaxDepth = 1.0f;
+	viewport.MinDepth = 0.0f;
 }
 
 void AppTest::update(float delta)
 {
-
+	yrot += 64.0f * delta;
+	if (yrot > 360.0f)
+	{
+		yrot -= 360.0f;
+	}
 }
 
 void AppTest::render()
 {
-	
-	glm::vec4 color = glm::vec4(glm::vec3(135.0f, 206.0f, 235.0f) / 255.0f, 1.0f);
+	ConstVS constVS = {};
+	constVS.proj =
+		glm::perspective(glm::radians(45.0f), (float)app_getWidth() / (float)app_getHeight(), 1.0f, 1024.0f);
+	constVS.view =
+		glm::mat4(1.0f);
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(0.0f, 1.0f, 0.0f));
 
-	context->ClearRenderTargetView(this->renderTargetView, (float*)&color);
+	D3D11_MAPPED_SUBRESOURCE mapped = {};
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
 
-	swapChain->Present(0, 0);
+	rend_clear(glm::vec4(glm::vec3(135.0f, 206.0f, 235.0f) / 255.0f, 1.0f), 1.0f);
+
+	rend_getContext()->RSSetState(this->rastState);
+	rend_getContext()->RSSetViewports(1, &viewport);
+
+	rend_getContext()->VSSetShader(this->vertexShader, nullptr, 0);
+	rend_getContext()->VSSetConstantBuffers(0, 1, &this->constVSBuffer);
+	rend_getContext()->PSSetShader(this->pixelShader, nullptr, 0);
+
+	uint32_t stride = sizeof(glm::vec3);
+	uint32_t offset = 0;
+
+	rend_getContext()->IASetInputLayout(this->inputLayout);
+	rend_getContext()->IASetVertexBuffers(0, 1, &this->vertexBuffer, &stride, &offset);
+	rend_getContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	rend_getContext()->Draw(vertices.size(), 0);
+
+	rend_present();
 }
 
 void AppTest::release()
 {
-	if (depthView)
+	if (rastState)
 	{
-		depthView->Release();
+		rastState->Release();
 	}
-	if (depthState)
+	this->releaseBuffer();
+	this->releaseShader();
+	rend_release();
+}
+
+void AppTest::initShader()
+{
+	HRESULT r;
+	ID3D10Blob* error = nullptr;
+	ID3D10Blob* vertexBlob = nullptr;
+	ID3D10Blob* pixelBlob = nullptr;
+
+	r = D3DX11CompileFromFile(
+		"data/triangle/shader_vs.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"vs_5_0",
+		D3D10_SHADER_ENABLE_STRICTNESS,
+		0,
+		nullptr,
+		&vertexBlob,
+		&error,
+		nullptr
+	);
+
+	if (FAILED(r))
 	{
-		depthState->Release();
-	}
-	if (depthBuffer)
-	{
-		depthBuffer->Release();
-	}
-	if (renderTargetView)
-	{
-		renderTargetView->Release();
-	}
-	if (context)
-	{
-		context->Release();
+		if (error)
+		{
+			std::cout << (char*)error->GetBufferPointer() << std::endl;
+		}
+		else
+		{
+			std::cout << "Fail doesn't exist" << std::endl;
+		}
+
+		throw std::runtime_error("");
 	}
 
-	if (device)
+	r = rend_getDevice()->CreateVertexShader(
+		vertexBlob->GetBufferPointer(),
+		vertexBlob->GetBufferSize(),
+		nullptr,
+		&this->vertexShader);
+
+	if (FAILED(r))
 	{
-		device->Release();
+		std::cout << "Failed to create Vertex Shader" << std::endl;
+		throw std::runtime_error("");
 	}
 
-	if (swapChain)
+	r = D3DX11CompileFromFile(
+		"data/triangle/shader_ps.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"ps_5_0",
+		D3D10_SHADER_ENABLE_STRICTNESS,
+		0,
+		nullptr,
+		&pixelBlob,
+		&error,
+		nullptr);
+
+	if (FAILED(r))
 	{
-		swapChain->Release();
+		if (error)
+		{
+			std::cout << (char*)error->GetBufferPointer() << std::endl;
+		}
+		else
+		{
+			std::cout << "Fail doesn't exist" << std::endl;
+		}
+
+		throw std::runtime_error("");
+	}
+
+	r = rend_getDevice()->CreatePixelShader(
+		pixelBlob->GetBufferPointer(),
+		pixelBlob->GetBufferSize(),
+		nullptr,
+		&this->pixelShader
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to create Vertex Shader" << std::endl;
+		throw std::runtime_error("");
+	}
+
+
+	std::vector<D3D11_INPUT_ELEMENT_DESC> elements = 
+	{
+		{
+			"POSITION",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			0,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}
+	};
+
+	r = rend_getDevice()->CreateInputLayout(
+		elements.data(),
+		elements.size(),
+		vertexBlob->GetBufferPointer(),
+		vertexBlob->GetBufferSize(),
+		&this->inputLayout);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to create input layout..." << std::endl;
+		throw std::runtime_error("");
+	}
+
+	// VS Buffer
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.ByteWidth = sizeof(ConstVS);
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bufferDesc.MiscFlags = 0;
+	bufferDesc.StructureByteStride = 0;
+
+	r = rend_getDevice()->CreateBuffer(
+		&bufferDesc,
+		nullptr,
+		&this->constVSBuffer
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Falied to create constVSBuffer..." << std::endl;
+		throw std::runtime_error("");
+	}
+
+	if (error)
+	{
+		error->Release();
+	}
+
+	if (vertexBlob)
+	{
+		vertexBlob->Release();
+	}
+
+	if (pixelBlob)
+	{
+		pixelBlob->Release();
 	}
 }
+
+void AppTest::releaseShader()
+{
+	if (this->constVSBuffer)
+	{
+		this->constVSBuffer->Release();
+	}
+	if (this->inputLayout)
+	{
+		this->inputLayout->Release();
+	}
+	if (this->vertexShader)
+	{
+		this->vertexShader->Release();
+	}
+	if (this->pixelShader)
+	{
+		this->pixelShader->Release();
+	}
+}
+
+void AppTest::initBuffer() 
+{
+	HRESULT r;
+
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	bufferDesc.ByteWidth = sizeof(glm::vec3) * vertices.size();
+	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.CPUAccessFlags = 0;
+	bufferDesc.MiscFlags = 0;
+	bufferDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA subData = {};
+	subData.pSysMem = vertices.data();
+	subData.SysMemPitch = 0;
+	subData.SysMemSlicePitch = 0;
+
+	r = rend_getDevice()->CreateBuffer(
+		&bufferDesc,
+		&subData,
+		&this->vertexBuffer
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to Vertex Buffer!" << std::endl;
+		throw std::runtime_error("");
+	}
+}
+
+void AppTest::releaseBuffer()
+{
+	if (vertexBuffer)
+	{
+		vertexBuffer->Release();
+	}
+}
+
