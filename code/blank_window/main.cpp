@@ -1,8 +1,11 @@
 #include "sys.h"
+#include "test.h"
+
 
 int main(int argc, char** argv)
 {
-	app_init("Blank Window", 1280, 720, nullptr);
+	AppTest test;
+	app_init("Blank Window", 1280, 720, &test);
 	app_update();
 	app_release();
 	return 0;
