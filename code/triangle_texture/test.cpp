@@ -5,6 +5,7 @@ void AppTest::init()
 	rend_init();
 	this->initShader();
 	this->initBuffer();
+	this->initTextures();
 
 	D3D11_RASTERIZER_DESC rastDesc = {};
 	rastDesc.AntialiasedLineEnable = false;
@@ -64,6 +65,8 @@ void AppTest::render()
 	rend_getContext()->VSSetShader(this->vertexShader, nullptr, 0);
 	rend_getContext()->VSSetConstantBuffers(0, 1, &this->constVSBuffer);
 	rend_getContext()->PSSetShader(this->pixelShader, nullptr, 0);
+	rend_getContext()->PSSetShaderResources(0, 1, &this->exampleTex0);
+	rend_getContext()->PSSetSamplers(0, 1, &this->exampleSampState);
 
 	uint32_t stride = sizeof(glm::vec3);
 	uint32_t offset = 0;
@@ -72,6 +75,8 @@ void AppTest::render()
 	rend_getContext()->IASetVertexBuffers(0, 1, &this->vertexBuffer, &stride, &offset);
 	stride = sizeof(glm::vec4);
 	rend_getContext()->IASetVertexBuffers(1, 1, &this->colorBuffer, &stride, &offset);
+	stride = sizeof(glm::vec2);
+	rend_getContext()->IASetVertexBuffers(2, 1, &this->texcoordBuffer, &stride, &offset);
 	rend_getContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	rend_getContext()->Draw(vertices.size(), 0);
@@ -85,6 +90,7 @@ void AppTest::release()
 	{
 		rastState->Release();
 	}
+	this->releaseTextures();
 	this->releaseBuffer();
 	this->releaseShader();
 	rend_release();
@@ -194,6 +200,15 @@ void AppTest::initShader()
 			0,
 			DXGI_FORMAT_R32G32B32A32_FLOAT,
 			1,
+			0,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+		{
+			"TEXCOORD",
+			0,
+			DXGI_FORMAT_R32G32_FLOAT,
+			2,
 			0,
 			D3D11_INPUT_PER_VERTEX_DATA,
 			0
@@ -328,11 +343,38 @@ void AppTest::initBuffer()
 
 	// TexCoords
 	D3D11_BUFFER_DESC tcDesc = {};
+	tcDesc.Usage = D3D11_USAGE_DEFAULT;
+	tcDesc.ByteWidth = sizeof(glm::vec2) * texcoords.size();
+	tcDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	tcDesc.CPUAccessFlags = 0;
+	tcDesc.MiscFlags = 0;
+	tcDesc.StructureByteStride = 0;
+
 	D3D11_SUBRESOURCE_DATA tcData = {};
+	tcData.pSysMem = texcoords.data();
+	tcData.SysMemPitch = 0;
+	tcData.SysMemSlicePitch = 0;
+
+	r = rend_getDevice()->CreateBuffer(
+		&tcDesc,
+		&tcData,
+		&this->texcoordBuffer
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to TexCoords Buffer!" << std::endl;
+		throw std::runtime_error("");
+	}
 }
 
 void AppTest::releaseBuffer()
 {
+	if (texcoordBuffer)
+	{
+		texcoordBuffer->Release();
+	}
+
 	if (colorBuffer)
 	{
 		colorBuffer->Release();
@@ -346,10 +388,50 @@ void AppTest::releaseBuffer()
 
 void AppTest::initTextures()
 {
+	HRESULT r;
 
+	r = D3DX11CreateShaderResourceViewFromFile(
+		rend_getDevice(),
+		"data/triangle_texture/example.png",
+		nullptr,
+		nullptr,
+		&this->exampleTex0,
+		nullptr
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to load shader resource view" << std::endl;
+		throw std::runtime_error("");
+	}
+
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	r = rend_getDevice()->CreateSamplerState(&sampDesc, &this->exampleSampState);
+
+	if (FAILED(r))
+	{
+		std::cout << "Falied to create sampler state..." << std::endl;
+		throw std::runtime_error("");
+	}
 }
 
 void AppTest::releaseTextures()
 {
+	if (this->exampleSampState)
+	{
+		this->exampleSampState->Release();
+	}
 
+	if (this->exampleTex0)
+	{
+		this->exampleTex0->Release();
+	}
 }

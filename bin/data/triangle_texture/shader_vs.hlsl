@@ -18,12 +18,14 @@ struct InputVS
 {
 	float3 vertices : POSITION;
 	float4 colors : COLOR;
+	float2 texCoords : TEXCOORD;
 };
 
 struct OutputVS
 {
 	float4 positions : SV_POSITION;
 	float4 colors : COLOR;
+	float2 texCoords : TEXCOORD;
 };
 
 OutputVS main(InputVS input)
@@ -35,6 +37,8 @@ OutputVS main(InputVS input)
 	output.positions = mul(proj, output.positions);
 	// Color
 	output.colors = input.colors;
+	// TexCoords
+	output.texCoords = input.texCoords;
 	// Return outputVS
 	return output;
 }
