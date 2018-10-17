@@ -1,7 +1,7 @@
 /*
 	shader_vs.hlsl
 	
-	This is the shader for triangle
+	This is the shader for triangle color
 */
 
 // Global
@@ -17,11 +17,13 @@ cbuffer ConstVS
 struct InputVS
 {
 	float3 vertices : POSITION;
+	float4 colors : COLOR;
 };
 
 struct OutputVS
 {
 	float4 positions : SV_POSITION;
+	float4 colors : COLOR;
 };
 
 OutputVS main(InputVS input)
@@ -31,6 +33,8 @@ OutputVS main(InputVS input)
 	output.positions = mul(model, float4(input.vertices, 1.0));
 	output.positions = mul(view, output.positions);
 	output.positions = mul(proj, output.positions);
+	// Color
+	output.colors = input.colors;
 	// Return outputVS
 	return output;
 }

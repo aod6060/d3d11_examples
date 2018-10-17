@@ -25,6 +25,13 @@ private:
 		glm::vec3(1.0f, -1.0f, 0.0f)
 	};
 	ID3D11Buffer* vertexBuffer = nullptr;
+	// Colors
+	std::vector<glm::vec4> colors = {
+		glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
+		glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
+		glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
+	};
+	ID3D11Buffer* colorBuffer = nullptr;
 	// Const Buffer
 	ID3D11Buffer* constVSBuffer = nullptr;
 	// Rasterizer

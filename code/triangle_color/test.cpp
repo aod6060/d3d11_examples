@@ -70,6 +70,8 @@ void AppTest::render()
 
 	rend_getContext()->IASetInputLayout(this->inputLayout);
 	rend_getContext()->IASetVertexBuffers(0, 1, &this->vertexBuffer, &stride, &offset);
+	stride = sizeof(glm::vec4);
+	rend_getContext()->IASetVertexBuffers(1, 1, &this->colorBuffer, &stride, &offset);
 	rend_getContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	rend_getContext()->Draw(vertices.size(), 0);
@@ -96,7 +98,7 @@ void AppTest::initShader()
 	ID3D10Blob* pixelBlob = nullptr;
 
 	r = D3DX11CompileFromFile(
-		"data/triangle/shader_vs.hlsl",
+		"data/triangle_color/shader_vs.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -136,7 +138,7 @@ void AppTest::initShader()
 	}
 
 	r = D3DX11CompileFromFile(
-		"data/triangle/shader_ps.hlsl",
+		"data/triangle_color/shader_ps.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -183,6 +185,15 @@ void AppTest::initShader()
 			0,
 			DXGI_FORMAT_R32G32B32_FLOAT,
 			0,
+			0,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		},
+		{
+			"COLOR",
+			0,
+			DXGI_FORMAT_R32G32B32A32_FLOAT,
+			1,
 			0,
 			D3D11_INPUT_PER_VERTEX_DATA,
 			0
@@ -287,10 +298,41 @@ void AppTest::initBuffer()
 		std::cout << "Failed to Vertex Buffer!" << std::endl;
 		throw std::runtime_error("");
 	}
+
+	D3D11_BUFFER_DESC colorDesc = {};
+	colorDesc.Usage = D3D11_USAGE_DEFAULT;
+	colorDesc.ByteWidth = sizeof(glm::vec4) * colors.size();
+	colorDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	colorDesc.CPUAccessFlags = 0;
+	colorDesc.MiscFlags = 0;
+	colorDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA colorData = {};
+	colorData.pSysMem = colors.data();
+	colorData.SysMemPitch = 0;
+	colorData.SysMemSlicePitch = 0;
+
+	r = rend_getDevice()->CreateBuffer(
+		&colorDesc,
+		&colorData,
+		&this->colorBuffer
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to Color Buffer!" << std::endl;
+		throw std::runtime_error("");
+	}
+
 }
 
 void AppTest::releaseBuffer()
 {
+	if (colorBuffer)
+	{
+		colorBuffer->Release();
+	}
+
 	if (vertexBuffer)
 	{
 		vertexBuffer->Release();
