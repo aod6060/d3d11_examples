@@ -20,7 +20,8 @@ private:
 	// Buffers
 	// Vertices
 	std::vector<glm::vec3> vertices = {
-		glm::vec3(0.0f, 1.0f, 0.0f),
+		glm::vec3(-1.0f, 1.0f, 0.0f),
+		glm::vec3(1.0f, 1.0f, 0.0f),
 		glm::vec3(-1.0f, -1.0f, 0.0f),
 		glm::vec3(1.0f, -1.0f, 0.0f)
 	};
@@ -29,16 +30,23 @@ private:
 	std::vector<glm::vec4> colors = {
 		glm::vec4(1.0f, 0.0f, 0.0f, 1.0f),
 		glm::vec4(0.0f, 1.0f, 0.0f, 1.0f),
-		glm::vec4(0.0f, 0.0f, 1.0f, 1.0f)
+		glm::vec4(0.0f, 0.0f, 1.0f, 1.0f),
+		glm::vec4(1.0f, 1.0f, 0.0f, 1.0f)
 	};
 	ID3D11Buffer* colorBuffer = nullptr;
 	// Textures
 	std::vector<glm::vec2> texcoords = {
-		glm::vec2(0.5f, 0.0f),
+		glm::vec2(0.0f, 0.0f),
+		glm::vec2(1.0f, 0.0f),
 		glm::vec2(0.0f, 1.0f),
 		glm::vec2(1.0f, 1.0f)
 	};
 	ID3D11Buffer* texcoordBuffer = nullptr;
+	// Index
+	std::vector<uint32_t> indices = {
+		0, 1, 2, 2, 1, 3
+	};
+	ID3D11Buffer* indexBuffer = nullptr;
 	// Const Buffer
 	ID3D11Buffer* constVSBuffer = nullptr;
 	// Rasterizer

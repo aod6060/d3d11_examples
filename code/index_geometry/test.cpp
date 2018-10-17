@@ -77,9 +77,10 @@ void AppTest::render()
 	rend_getContext()->IASetVertexBuffers(1, 1, &this->colorBuffer, &stride, &offset);
 	stride = sizeof(glm::vec2);
 	rend_getContext()->IASetVertexBuffers(2, 1, &this->texcoordBuffer, &stride, &offset);
+	rend_getContext()->IASetIndexBuffer(this->indexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	rend_getContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	rend_getContext()->Draw(vertices.size(), 0);
+	rend_getContext()->DrawIndexed(indices.size(), 0, 0);
 
 	rend_present();
 }
@@ -104,7 +105,7 @@ void AppTest::initShader()
 	ID3D10Blob* pixelBlob = nullptr;
 
 	r = D3DX11CompileFromFile(
-		"data/triangle_texture/shader_vs.hlsl",
+		"data/index_geom/shader_vs.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -144,7 +145,7 @@ void AppTest::initShader()
 	}
 
 	r = D3DX11CompileFromFile(
-		"data/triangle_texture/shader_ps.hlsl",
+		"data/index_geom/shader_ps.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -366,10 +367,40 @@ void AppTest::initBuffer()
 		std::cout << "Failed to TexCoords Buffer!" << std::endl;
 		throw std::runtime_error("");
 	}
+
+	// Index
+	D3D11_BUFFER_DESC indexDesc = {};
+	indexDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexDesc.ByteWidth = sizeof(uint32_t) * indices.size();
+	indexDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexDesc.CPUAccessFlags = 0;
+	indexDesc.MiscFlags = 0;
+	indexDesc.StructureByteStride = 0;
+
+	D3D11_SUBRESOURCE_DATA indexData = {};
+	indexData.pSysMem = indices.data();
+	indexData.SysMemPitch = 0;
+	indexData.SysMemSlicePitch = 0;
+
+	r = rend_getDevice()->CreateBuffer(
+		&indexDesc,
+		&indexData,
+		&this->indexBuffer
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to TexCoords Buffer!" << std::endl;
+		throw std::runtime_error("");
+	}
 }
 
 void AppTest::releaseBuffer()
 {
+	if (indexBuffer)
+	{
+		indexBuffer->Release();
+	}
 	if (texcoordBuffer)
 	{
 		texcoordBuffer->Release();
