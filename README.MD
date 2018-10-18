@@ -26,3 +26,6 @@ https://github.com/aod6060/d3d11_examples/tree/master/code/index_geometry
 ## Mesh Loading
 This demonstrates how the load meshes using assimp using D3D11 api.
 https://github.com/aod6060/d3d11_examples/tree/master/code/mesh_loading
+
+## Simple Camera
+This is a simple camera system.

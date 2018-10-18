@@ -2,6 +2,15 @@
 
 void AppTest::init()
 {
+
+	this->camera.init(
+		glm::vec3(0.0f),
+		glm::vec2(0.0f),
+		glm::radians(45.0f),
+		(float)app_getWidth() / (float)app_getHeight(),
+		1.0f,
+		1024.0f);
+
 	rend_init();
 	this->initShader();
 	this->initMesh();
@@ -40,7 +49,7 @@ void AppTest::update(float delta)
 		yrot -= 360.0f;
 	}
 
-	if (input_isKeyDown(Keyboard::KEY_TAB))
+	if (input_isKeyDown(Keyboard::KEY_1))
 	{
 		this->amount += 1;
 	}
@@ -49,24 +58,20 @@ void AppTest::update(float delta)
 	{
 		this->amount = 0;
 	}
+
+	if (input_isKeyDown(Keyboard::KEY_TAB))
+	{
+		input_toggleGrab();
+	}
+
+	if (input_isGrab())
+	{
+		this->camera.update(delta);
+	}
 }
 
 void AppTest::render()
 {
-	ConstVS constVS = {};
-	constVS.proj =
-		glm::perspective(glm::radians(45.0f), (float)app_getWidth() / (float)app_getHeight(), 1.0f, 1024.0f);
-	constVS.view =
-		glm::mat4(1.0f);
-	constVS.model =
-		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-
-	D3D11_MAPPED_SUBRESOURCE mapped = {};
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-
 	rend_clear(glm::vec4(glm::vec3(135.0f, 206.0f, 235.0f) / 255.0f, 1.0f), 1.0f);
 
 	rend_getContext()->RSSetState(this->rastState);
@@ -79,6 +84,59 @@ void AppTest::render()
 	rend_getContext()->PSSetSamplers(0, 1, &this->exampleSampState);
 	rend_getContext()->IASetInputLayout(this->inputLayout);
 
+
+	ConstVS constVS = {};
+	constVS.proj = this->camera.toProj();
+	constVS.view = this->camera.toView();
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
+
+	// Back
+	D3D11_MAPPED_SUBRESOURCE mapped = {};
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
+	meshes[this->amount]->render();
+	// Front
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 5.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
+	meshes[this->amount]->render();
+	// Left
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
+	meshes[this->amount]->render();
+	// Right
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
+	meshes[this->amount]->render();
+	// Bottom
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -5.0f, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
+	meshes[this->amount]->render();
+	// Up
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 5.0f, 0.0f)) *
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
+	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
+	rend_getContext()->Unmap(constVSBuffer, 0);
 	meshes[this->amount]->render();
 
 	rend_present();

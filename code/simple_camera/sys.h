@@ -31,3 +31,4 @@
 #include "input.h"
 #include "render.h"
 #include "mesh.h"
+#include "camera.h"

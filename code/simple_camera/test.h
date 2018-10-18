@@ -12,6 +12,8 @@ struct ConstVS
 class AppTest : public IApp
 {
 private:
+	// Camera
+	Camera camera;
 	// Shaders
 	ID3D11VertexShader* vertexShader = nullptr;
 	ID3D11PixelShader* pixelShader = nullptr;
