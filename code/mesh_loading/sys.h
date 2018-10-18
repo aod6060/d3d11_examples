@@ -23,6 +23,11 @@
 #include <d3d11.h>
 #include <D3DX11.h>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include "app.h"
 #include "input.h"
 #include "render.h"
+#include "mesh.h"

@@ -4,7 +4,7 @@ void AppTest::init()
 {
 	rend_init();
 	this->initShader();
-	this->initBuffer();
+	this->initMesh();
 	this->initTextures();
 
 	D3D11_RASTERIZER_DESC rastDesc = {};
@@ -39,6 +39,16 @@ void AppTest::update(float delta)
 	{
 		yrot -= 360.0f;
 	}
+
+	if (input_isKeyDown(Keyboard::KEY_TAB))
+	{
+		this->amount += 1;
+	}
+
+	if (this->meshes.size() <= this->amount)
+	{
+		this->amount = 0;
+	}
 }
 
 void AppTest::render()
@@ -50,7 +60,7 @@ void AppTest::render()
 		glm::mat4(1.0f);
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
-		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(0.0f, 1.0f, 0.0f));
+		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
 
 	D3D11_MAPPED_SUBRESOURCE mapped = {};
 	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
@@ -67,20 +77,9 @@ void AppTest::render()
 	rend_getContext()->PSSetShader(this->pixelShader, nullptr, 0);
 	rend_getContext()->PSSetShaderResources(0, 1, &this->exampleTex0);
 	rend_getContext()->PSSetSamplers(0, 1, &this->exampleSampState);
-
-	uint32_t stride = sizeof(glm::vec3);
-	uint32_t offset = 0;
-
 	rend_getContext()->IASetInputLayout(this->inputLayout);
-	rend_getContext()->IASetVertexBuffers(0, 1, &this->vertexBuffer, &stride, &offset);
-	stride = sizeof(glm::vec4);
-	rend_getContext()->IASetVertexBuffers(1, 1, &this->colorBuffer, &stride, &offset);
-	stride = sizeof(glm::vec2);
-	rend_getContext()->IASetVertexBuffers(2, 1, &this->texcoordBuffer, &stride, &offset);
-	rend_getContext()->IASetIndexBuffer(this->indexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	rend_getContext()->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-	rend_getContext()->DrawIndexed(indices.size(), 0, 0);
+	meshes[this->amount]->render();
 
 	rend_present();
 }
@@ -92,7 +91,7 @@ void AppTest::release()
 		rastState->Release();
 	}
 	this->releaseTextures();
-	this->releaseBuffer();
+	this->releaseMesh();
 	this->releaseShader();
 	rend_release();
 }
@@ -195,20 +194,20 @@ void AppTest::initShader()
 			0,
 			D3D11_INPUT_PER_VERTEX_DATA,
 			0
-		},
-		{
-			"COLOR",
-			0,
-			DXGI_FORMAT_R32G32B32A32_FLOAT,
-			1,
-			0,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		},
+		}, 
 		{
 			"TEXCOORD",
 			0,
 			DXGI_FORMAT_R32G32_FLOAT,
+			1,
+			0,
+			D3D11_INPUT_PER_VERTEX_DATA,
+			0
+		}, 
+		{
+			"NORMAL",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
 			2,
 			0,
 			D3D11_INPUT_PER_VERTEX_DATA,
@@ -286,135 +285,29 @@ void AppTest::releaseShader()
 	}
 }
 
-void AppTest::initBuffer() 
+void AppTest::initMesh()
 {
-	HRESULT r;
+	cube.init("data/mesh_loading/cube.blend");
+	sphere.init("data/mesh_loading/sphere.blend");
+	cylender.init("data/mesh_loading/cylender.blend");
+	torus.init("data/mesh_loading/torus.blend");
+	monkey.init("data/mesh_loading/monkey.blend");
 
-	// Vertices
-	D3D11_BUFFER_DESC bufferDesc = {};
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof(glm::vec3) * vertices.size();
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bufferDesc.CPUAccessFlags = 0;
-	bufferDesc.MiscFlags = 0;
-	bufferDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA subData = {};
-	subData.pSysMem = vertices.data();
-	subData.SysMemPitch = 0;
-	subData.SysMemSlicePitch = 0;
-
-	r = rend_getDevice()->CreateBuffer(
-		&bufferDesc,
-		&subData,
-		&this->vertexBuffer
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to Vertex Buffer!" << std::endl;
-		throw std::runtime_error("");
-	}
-
-	// Colors
-	D3D11_BUFFER_DESC colorDesc = {};
-	colorDesc.Usage = D3D11_USAGE_DEFAULT;
-	colorDesc.ByteWidth = sizeof(glm::vec4) * colors.size();
-	colorDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	colorDesc.CPUAccessFlags = 0;
-	colorDesc.MiscFlags = 0;
-	colorDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA colorData = {};
-	colorData.pSysMem = colors.data();
-	colorData.SysMemPitch = 0;
-	colorData.SysMemSlicePitch = 0;
-
-	r = rend_getDevice()->CreateBuffer(
-		&colorDesc,
-		&colorData,
-		&this->colorBuffer
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to Color Buffer!" << std::endl;
-		throw std::runtime_error("");
-	}
-
-	// TexCoords
-	D3D11_BUFFER_DESC tcDesc = {};
-	tcDesc.Usage = D3D11_USAGE_DEFAULT;
-	tcDesc.ByteWidth = sizeof(glm::vec2) * texcoords.size();
-	tcDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	tcDesc.CPUAccessFlags = 0;
-	tcDesc.MiscFlags = 0;
-	tcDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA tcData = {};
-	tcData.pSysMem = texcoords.data();
-	tcData.SysMemPitch = 0;
-	tcData.SysMemSlicePitch = 0;
-
-	r = rend_getDevice()->CreateBuffer(
-		&tcDesc,
-		&tcData,
-		&this->texcoordBuffer
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to TexCoords Buffer!" << std::endl;
-		throw std::runtime_error("");
-	}
-
-	// Index
-	D3D11_BUFFER_DESC indexDesc = {};
-	indexDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexDesc.ByteWidth = sizeof(uint32_t) * indices.size();
-	indexDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	indexDesc.CPUAccessFlags = 0;
-	indexDesc.MiscFlags = 0;
-	indexDesc.StructureByteStride = 0;
-
-	D3D11_SUBRESOURCE_DATA indexData = {};
-	indexData.pSysMem = indices.data();
-	indexData.SysMemPitch = 0;
-	indexData.SysMemSlicePitch = 0;
-
-	r = rend_getDevice()->CreateBuffer(
-		&indexDesc,
-		&indexData,
-		&this->indexBuffer
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to TexCoords Buffer!" << std::endl;
-		throw std::runtime_error("");
-	}
+	meshes.push_back(&cube);
+	meshes.push_back(&sphere);
+	meshes.push_back(&cylender);
+	meshes.push_back(&torus);
+	meshes.push_back(&monkey);
 }
 
-void AppTest::releaseBuffer()
+void AppTest::releaseMesh()
 {
-	if (indexBuffer)
-	{
-		indexBuffer->Release();
-	}
-	if (texcoordBuffer)
-	{
-		texcoordBuffer->Release();
-	}
-
-	if (colorBuffer)
-	{
-		colorBuffer->Release();
-	}
-
-	if (vertexBuffer)
-	{
-		vertexBuffer->Release();
-	}
+	meshes.clear();
+	monkey.release();
+	torus.release();
+	cylender.release();
+	sphere.release();
+	cube.release();
 }
 
 void AppTest::initTextures()
@@ -460,7 +353,6 @@ void AppTest::releaseTextures()
 	{
 		this->exampleSampState->Release();
 	}
-
 	if (this->exampleTex0)
 	{
 		this->exampleTex0->Release();
