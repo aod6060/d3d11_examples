@@ -3,17 +3,26 @@
 These are a set of examples for me to learn D3D11 examples... These
 will basically be built up over the course of each example.
 
-## blank window
+## Blank Window
 Very basic example, just setting up window
+https://github.com/aod6060/d3d11_examples/tree/master/code/blank_window
 
-## triangle
+## Triangle
 Drawing a triangle to the window.
+https://github.com/aod6060/d3d11_examples/tree/master/code/triangle
 
-## triangle color
+## Triangle Color
 Demonstrating color blending triangle.
+https://github.com/aod6060/d3d11_examples/tree/master/code/triangle_color
 
-## triangle texture
+## Triangle Texture
 Demonstrating texturing...
+https://github.com/aod6060/d3d11_examples/tree/master/code/triangle_texture
 
-## index geom
+## Index Geometry
 Demonstrating index drawing...
+https://github.com/aod6060/d3d11_examples/tree/master/code/index_geometry
+
+## Mesh Loading
+This demonstrates how the load meshes using assimp using D3D11 api.
+https://github.com/aod6060/d3d11_examples/tree/master/code/mesh_loading
