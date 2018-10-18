@@ -104,7 +104,7 @@ void AppTest::initShader()
 	ID3D10Blob* pixelBlob = nullptr;
 
 	r = D3DX11CompileFromFile(
-		"data/mesh_loading/shader_vs.hlsl",
+		"data/simple_camera/shader_vs.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -144,7 +144,7 @@ void AppTest::initShader()
 	}
 
 	r = D3DX11CompileFromFile(
-		"data/mesh_loading/shader_ps.hlsl",
+		"data/simple_camera/shader_ps.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -287,11 +287,11 @@ void AppTest::releaseShader()
 
 void AppTest::initMesh()
 {
-	cube.init("data/mesh_loading/cube.blend");
-	sphere.init("data/mesh_loading/sphere.blend");
-	cylender.init("data/mesh_loading/cylender.blend");
-	torus.init("data/mesh_loading/torus.blend");
-	monkey.init("data/mesh_loading/monkey.blend");
+	cube.init("data/simple_camera/cube.blend");
+	sphere.init("data/simple_camera/sphere.blend");
+	cylender.init("data/simple_camera/cylender.blend");
+	torus.init("data/simple_camera/torus.blend");
+	monkey.init("data/simple_camera/monkey.blend");
 
 	meshes.push_back(&cube);
 	meshes.push_back(&sphere);
@@ -316,7 +316,7 @@ void AppTest::initTextures()
 
 	r = D3DX11CreateShaderResourceViewFromFile(
 		rend_getDevice(),
-		"data/mesh_loading/example.png",
+		"data/simple_camera/example.png",
 		nullptr,
 		nullptr,
 		&this->exampleTex0,
