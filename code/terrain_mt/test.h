@@ -48,11 +48,11 @@ private:
 	// Const Buffer
 	// ConstVS
 	ConstVS constVS = {};
-	ID3D11Buffer* constVSBuffer = nullptr;
+	ConstBuffer<ConstVS> constVSBuf;
 
 	// ConstPS
 	ConstPS constPS = {};
-	ID3D11Buffer* constPSBuffer = nullptr;
+	ConstBuffer<ConstPS> constPSBuf;
 
 	// Rasterizer
 	ID3D11RasterizerState* rastState = nullptr;
@@ -61,17 +61,11 @@ private:
 	// Rotation Values
 	float yrot = 0.0f;
 	// Texture
-	ID3D11ShaderResourceView* exampleTex0 = nullptr;
-	ID3D11SamplerState* exampleSampState = nullptr;
-
-	ID3D11ShaderResourceView* grassTex0 = nullptr;
-	ID3D11SamplerState* grassSampState = nullptr;
+	Texture2D example;
+	Texture2D sand;
 
 	void initMesh();
 	void releaseMesh();
-
-	void initTextures();
-	void releaseTextures();
 
 	void updateConstBuffer(ID3D11Buffer* cBuf, void* data, size_t size);
 
