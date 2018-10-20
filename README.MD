@@ -35,3 +35,4 @@ https://github.com/aod6060/d3d11_examples/tree/master/code/simple_camera
 This examples show how to render terrain in D3D11. Its quite simple to do,
 however, this example doesn't have multi texturing. The next example will 
 demonstrate how to do it there...
+https://github.com/aod6060/d3d11_examples/tree/master/code/terrain
