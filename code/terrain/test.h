@@ -19,6 +19,8 @@ private:
 	ID3D11PixelShader* pixelShader = nullptr;
 	// Input Layout
 	ID3D11InputLayout* inputLayout = nullptr;
+	// Mesh Shader
+	MeshShader meshShader;
 	// Mesh
 	Mesh cube;
 	Mesh sphere;
@@ -30,6 +32,7 @@ private:
 	uint32_t amount = 0;
 
 	// Const Buffer
+	ConstVS constVS = {};
 	ID3D11Buffer* constVSBuffer = nullptr;
 	// Rasterizer
 	ID3D11RasterizerState* rastState = nullptr;
@@ -41,14 +44,13 @@ private:
 	ID3D11ShaderResourceView* exampleTex0 = nullptr;
 	ID3D11SamplerState* exampleSampState = nullptr;
 
-	void initShader();
-	void releaseShader();
-
 	void initMesh();
 	void releaseMesh();
 
 	void initTextures();
 	void releaseTextures();
+
+	void updateConstBuffer(ID3D11Buffer* cBuf, void* data, size_t size);
 
 public:
 	virtual void init();

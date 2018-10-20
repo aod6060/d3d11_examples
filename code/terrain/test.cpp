@@ -12,9 +12,31 @@ void AppTest::init()
 		1024.0f);
 
 	rend_init();
-	this->initShader();
+
+	meshShader.init();
+
 	this->initMesh();
 	this->initTextures();
+
+	// Create Const VS
+	D3D11_BUFFER_DESC bufferDesc = {};
+	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufferDesc.ByteWidth = sizeof(ConstVS);
+	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bufferDesc.MiscFlags = 0;
+	bufferDesc.StructureByteStride = 0;
+
+	HRESULT r = rend_getDevice()->CreateBuffer(
+		&bufferDesc,
+		nullptr,
+		&this->constVSBuffer);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to create Const VS Buffer" << std::endl;
+		throw std::runtime_error("");
+	}
 
 	D3D11_RASTERIZER_DESC rastDesc = {};
 	rastDesc.AntialiasedLineEnable = false;
@@ -28,10 +50,16 @@ void AppTest::init()
 	rastDesc.ScissorEnable = false;
 	rastDesc.SlopeScaledDepthBias = 0.0f;
 
-	HRESULT r = rend_getDevice()->CreateRasterizerState(
+	r = rend_getDevice()->CreateRasterizerState(
 		&rastDesc,
 		&this->rastState
 	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to create rasterizer..." << std::endl;
+		throw std::runtime_error("");
+	}
 
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
@@ -77,67 +105,49 @@ void AppTest::render()
 	rend_getContext()->RSSetState(this->rastState);
 	rend_getContext()->RSSetViewports(1, &viewport);
 
-	rend_getContext()->VSSetShader(this->vertexShader, nullptr, 0);
-	rend_getContext()->VSSetConstantBuffers(0, 1, &this->constVSBuffer);
-	rend_getContext()->PSSetShader(this->pixelShader, nullptr, 0);
-	rend_getContext()->PSSetShaderResources(0, 1, &this->exampleTex0);
-	rend_getContext()->PSSetSamplers(0, 1, &this->exampleSampState);
-	rend_getContext()->IASetInputLayout(this->inputLayout);
+	meshShader.bind();
+	meshShader.setVSConstBuffer(this->constVSBuffer, 0);
+	meshShader.setPSShaderResources(this->exampleTex0, 0);
+	meshShader.setPSSamplers(this->exampleSampState, 0);
 
-
-	ConstVS constVS = {};
 	constVS.proj = this->camera.toProj();
 	constVS.view = this->camera.toView();
+	// Back
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-
-	// Back
-	D3D11_MAPPED_SUBRESOURCE mapped = {};
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-	meshes[this->amount]->render();
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	meshShader.render(*meshes[this->amount]);
 	// Front
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 5.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-	meshes[this->amount]->render();
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	meshShader.render(*meshes[this->amount]);
 	// Left
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(-5.0f, 0.0f, 0.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-	meshes[this->amount]->render();
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	meshShader.render(*meshes[this->amount]);
 	// Right
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(5.0f, 0.0f, 0.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-	meshes[this->amount]->render();
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	meshShader.render(*meshes[this->amount]);
 	// Bottom
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -5.0f, 0.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-	meshes[this->amount]->render();
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	meshShader.render(*meshes[this->amount]);
 	// Up
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 5.0f, 0.0f)) *
 		glm::rotate(glm::mat4(1.0f), glm::radians(yrot), glm::vec3(1.0f, 1.0f, 0.0f));
-	rend_getContext()->Map(constVSBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, &constVS, sizeof(ConstVS));
-	rend_getContext()->Unmap(constVSBuffer, 0);
-	meshes[this->amount]->render();
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	meshShader.render(*meshes[this->amount]);
 
 	rend_present();
 }
@@ -148,199 +158,14 @@ void AppTest::release()
 	{
 		rastState->Release();
 	}
-	this->releaseTextures();
-	this->releaseMesh();
-	this->releaseShader();
-	rend_release();
-}
-
-void AppTest::initShader()
-{
-	HRESULT r;
-	ID3D10Blob* error = nullptr;
-	ID3D10Blob* vertexBlob = nullptr;
-	ID3D10Blob* pixelBlob = nullptr;
-
-	r = D3DX11CompileFromFile(
-		"data/terrain/mesh_vs.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"vs_5_0",
-		D3D10_SHADER_ENABLE_STRICTNESS,
-		0,
-		nullptr,
-		&vertexBlob,
-		&error,
-		nullptr
-	);
-
-	if (FAILED(r))
-	{
-		if (error)
-		{
-			std::cout << (char*)error->GetBufferPointer() << std::endl;
-		}
-		else
-		{
-			std::cout << "Fail doesn't exist" << std::endl;
-		}
-
-		throw std::runtime_error("");
-	}
-
-	r = rend_getDevice()->CreateVertexShader(
-		vertexBlob->GetBufferPointer(),
-		vertexBlob->GetBufferSize(),
-		nullptr,
-		&this->vertexShader);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to create Vertex Shader" << std::endl;
-		throw std::runtime_error("");
-	}
-
-	r = D3DX11CompileFromFile(
-		"data/terrain/mesh_ps.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"ps_5_0",
-		D3D10_SHADER_ENABLE_STRICTNESS,
-		0,
-		nullptr,
-		&pixelBlob,
-		&error,
-		nullptr);
-
-	if (FAILED(r))
-	{
-		if (error)
-		{
-			std::cout << (char*)error->GetBufferPointer() << std::endl;
-		}
-		else
-		{
-			std::cout << "Fail doesn't exist" << std::endl;
-		}
-
-		throw std::runtime_error("");
-	}
-
-	r = rend_getDevice()->CreatePixelShader(
-		pixelBlob->GetBufferPointer(),
-		pixelBlob->GetBufferSize(),
-		nullptr,
-		&this->pixelShader
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to create Vertex Shader" << std::endl;
-		throw std::runtime_error("");
-	}
-
-
-	std::vector<D3D11_INPUT_ELEMENT_DESC> elements = 
-	{
-		{
-			"POSITION",
-			0,
-			DXGI_FORMAT_R32G32B32_FLOAT,
-			0,
-			0,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		}, 
-		{
-			"TEXCOORD",
-			0,
-			DXGI_FORMAT_R32G32_FLOAT,
-			1,
-			0,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		}, 
-		{
-			"NORMAL",
-			0,
-			DXGI_FORMAT_R32G32B32_FLOAT,
-			2,
-			0,
-			D3D11_INPUT_PER_VERTEX_DATA,
-			0
-		}
-	};
-
-	r = rend_getDevice()->CreateInputLayout(
-		elements.data(),
-		elements.size(),
-		vertexBlob->GetBufferPointer(),
-		vertexBlob->GetBufferSize(),
-		&this->inputLayout);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to create input layout..." << std::endl;
-		throw std::runtime_error("");
-	}
-
-	// VS Buffer
-	D3D11_BUFFER_DESC bufferDesc = {};
-	bufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	bufferDesc.ByteWidth = sizeof(ConstVS);
-	bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	bufferDesc.MiscFlags = 0;
-	bufferDesc.StructureByteStride = 0;
-
-	r = rend_getDevice()->CreateBuffer(
-		&bufferDesc,
-		nullptr,
-		&this->constVSBuffer
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Falied to create constVSBuffer..." << std::endl;
-		throw std::runtime_error("");
-	}
-
-	if (error)
-	{
-		error->Release();
-	}
-
-	if (vertexBlob)
-	{
-		vertexBlob->Release();
-	}
-
-	if (pixelBlob)
-	{
-		pixelBlob->Release();
-	}
-}
-
-void AppTest::releaseShader()
-{
 	if (this->constVSBuffer)
 	{
-		this->constVSBuffer->Release();
+		constVSBuffer->Release();
 	}
-	if (this->inputLayout)
-	{
-		this->inputLayout->Release();
-	}
-	if (this->vertexShader)
-	{
-		this->vertexShader->Release();
-	}
-	if (this->pixelShader)
-	{
-		this->pixelShader->Release();
-	}
+	this->releaseTextures();
+	this->releaseMesh();
+	meshShader.release();
+	rend_release();
 }
 
 void AppTest::initMesh()
@@ -415,4 +240,12 @@ void AppTest::releaseTextures()
 	{
 		this->exampleTex0->Release();
 	}
+}
+
+void AppTest::updateConstBuffer(ID3D11Buffer* cBuf, void* data, size_t size)
+{
+	D3D11_MAPPED_SUBRESOURCE mapped = {};
+	rend_getContext()->Map(cBuf, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
+	memcpy(mapped.pData, data, size);
+	rend_getContext()->Unmap(cBuf, 0);
 }

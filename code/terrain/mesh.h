@@ -23,3 +23,26 @@ struct Mesh
 	void render();
 
 };
+
+struct MeshShader
+{
+	std::string vsPath = "data/terrain/mesh_vs.hlsl";
+	std::string psPath = "data/terrain/mesh_ps.hlsl";
+
+	ID3D11VertexShader* vertexShader = nullptr;
+	ID3D11PixelShader* pixelShader = nullptr;
+	ID3D11InputLayout* inputLayout = nullptr;
+
+	void init();
+	void release();
+
+	void setVSConstBuffer(ID3D11Buffer* constBuffer, int inputSlot);
+	void setPSConstBuffer(ID3D11Buffer* constBuffer, int inputSlot);
+	void setPSShaderResources(ID3D11ShaderResourceView* resource, int inputSlot);
+	void setPSSamplers(ID3D11SamplerState* samplers, int inputSlot);
+
+	void bind();
+
+	void render(Mesh& mesh);
+
+};
