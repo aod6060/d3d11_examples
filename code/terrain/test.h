@@ -9,6 +9,12 @@ struct ConstVS
 	glm::mat4 model;
 };
 
+struct ConstPS
+{
+	float tcScale;
+	glm::vec3 unused1;
+};
+
 class AppTest : public IApp
 {
 private:
@@ -19,8 +25,16 @@ private:
 	ID3D11PixelShader* pixelShader = nullptr;
 	// Input Layout
 	ID3D11InputLayout* inputLayout = nullptr;
+
+	// Terrain Shader
+	TerrainShader terrainShader;
+
+	// Terrain
+	Terrain terrain;
+
 	// Mesh Shader
 	MeshShader meshShader;
+
 	// Mesh
 	Mesh cube;
 	Mesh sphere;
@@ -32,8 +46,14 @@ private:
 	uint32_t amount = 0;
 
 	// Const Buffer
+	// ConstVS
 	ConstVS constVS = {};
 	ID3D11Buffer* constVSBuffer = nullptr;
+
+	// ConstPS
+	ConstPS constPS = {};
+	ID3D11Buffer* constPSBuffer = nullptr;
+
 	// Rasterizer
 	ID3D11RasterizerState* rastState = nullptr;
 	// View Port
@@ -43,6 +63,9 @@ private:
 	// Texture
 	ID3D11ShaderResourceView* exampleTex0 = nullptr;
 	ID3D11SamplerState* exampleSampState = nullptr;
+
+	ID3D11ShaderResourceView* grassTex0 = nullptr;
+	ID3D11SamplerState* grassSampState = nullptr;
 
 	void initMesh();
 	void releaseMesh();

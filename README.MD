@@ -30,3 +30,8 @@ https://github.com/aod6060/d3d11_examples/tree/master/code/mesh_loading
 ## Simple Camera
 This is a simple camera system.
 https://github.com/aod6060/d3d11_examples/tree/master/code/simple_camera
+
+## Terrain
+This examples show how to render terrain in D3D11. Its quite simple to do,
+however, this example doesn't have multi texturing. The next example will 
+demonstrate how to do it there...

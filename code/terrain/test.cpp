@@ -2,7 +2,6 @@
 
 void AppTest::init()
 {
-
 	this->camera.init(
 		glm::vec3(0.0f),
 		glm::vec2(0.0f),
@@ -17,6 +16,9 @@ void AppTest::init()
 
 	this->initMesh();
 	this->initTextures();
+
+	terrainShader.init();
+	terrain.init("data/terrain/height_map_island.png");
 
 	// Create Const VS
 	D3D11_BUFFER_DESC bufferDesc = {};
@@ -35,6 +37,27 @@ void AppTest::init()
 	if (FAILED(r))
 	{
 		std::cout << "Failed to create Const VS Buffer" << std::endl;
+		throw std::runtime_error("");
+	}
+
+	// Create Const PS
+	D3D11_BUFFER_DESC bufPSDesc = {};
+	bufPSDesc.Usage = D3D11_USAGE_DYNAMIC;
+	bufPSDesc.ByteWidth = sizeof(ConstPS);
+	bufPSDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	bufPSDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	bufPSDesc.MiscFlags = 0;
+	bufPSDesc.StructureByteStride = 0;
+
+	r = rend_getDevice()->CreateBuffer(
+		&bufferDesc,
+		nullptr,
+		&this->constPSBuffer
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to create Const PS Buffer" << std::endl;
 		throw std::runtime_error("");
 	}
 
@@ -105,13 +128,30 @@ void AppTest::render()
 	rend_getContext()->RSSetState(this->rastState);
 	rend_getContext()->RSSetViewports(1, &viewport);
 
+	constVS.proj = this->camera.toProj();
+	constVS.view = this->camera.toView();
+
+	constPS.tcScale = terrain.width / 16.0f;
+
+	this->updateConstBuffer(this->constPSBuffer, &constPS, sizeof(ConstPS));
+
+	terrainShader.bind();
+	terrainShader.setVSConstBuffer(this->constVSBuffer, 0);
+	terrainShader.setPSShaderResources(this->grassTex0, 0);
+	terrainShader.setPSSamplers(this->grassSampState, 0);
+	terrainShader.setPSConstBuffer(this->constPSBuffer, 0);
+
+	constVS.model =
+		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f));
+
+	this->updateConstBuffer(this->constVSBuffer, &constVS, sizeof(ConstVS));
+	terrainShader.render(terrain);
+
 	meshShader.bind();
 	meshShader.setVSConstBuffer(this->constVSBuffer, 0);
 	meshShader.setPSShaderResources(this->exampleTex0, 0);
 	meshShader.setPSSamplers(this->exampleSampState, 0);
 
-	constVS.proj = this->camera.toProj();
-	constVS.view = this->camera.toView();
 	// Back
 	constVS.model =
 		glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -5.0f)) *
@@ -158,10 +198,16 @@ void AppTest::release()
 	{
 		rastState->Release();
 	}
+	if (this->constPSBuffer)
+	{
+		constPSBuffer->Release();
+	}
 	if (this->constVSBuffer)
 	{
 		constVSBuffer->Release();
 	}
+	terrain.release();
+	terrainShader.release();
 	this->releaseTextures();
 	this->releaseMesh();
 	meshShader.release();
@@ -228,10 +274,43 @@ void AppTest::initTextures()
 		std::cout << "Falied to create sampler state..." << std::endl;
 		throw std::runtime_error("");
 	}
+
+	r = D3DX11CreateShaderResourceViewFromFile(
+		rend_getDevice(),
+		"data/terrain/sand.png",
+		nullptr,
+		nullptr,
+		&this->grassTex0,
+		nullptr);
+
+	if (FAILED(r))
+	{
+		std::cout << "Failed to load shader resource view" << std::endl;
+		throw std::runtime_error("");
+	}
+
+	r = rend_getDevice()->CreateSamplerState(
+		&sampDesc,
+		&this->grassSampState
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Falied to create sampler state..." << std::endl;
+		throw std::runtime_error("");
+	}
 }
 
 void AppTest::releaseTextures()
 {
+	if (grassSampState)
+	{
+		this->grassSampState->Release();
+	}
+	if (this->grassTex0)
+	{
+		this->grassTex0->Release();
+	}
 	if (this->exampleSampState)
 	{
 		this->exampleSampState->Release();

@@ -27,8 +27,11 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <freeimage/FreeImage.h>
+
 #include "app.h"
 #include "input.h"
 #include "render.h"
+#include "terrain.h"
 #include "mesh.h"
 #include "camera.h"

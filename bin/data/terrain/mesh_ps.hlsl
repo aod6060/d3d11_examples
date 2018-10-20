@@ -1,5 +1,5 @@
 /**
-	shader_ps.hlsl
+	mesh_ps.hlsl
 */
 
 struct OutputVS

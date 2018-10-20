@@ -8,7 +8,7 @@ struct Camera
 
 	float fov = 0.0f;
 	float aspect = 0.0f;
-	float minZ = 1.0f;
+	float minZ = 0.1f;
 	float maxZ = 1024.0f;
 
 	float rotSpeed = 128.0f;
