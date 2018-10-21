@@ -40,3 +40,4 @@ https://github.com/aod6060/d3d11_examples/tree/master/code/terrain
 ## Terrain Multi Texture
 This example demonstrates how to do multi texture terrain. I'm using a blend
 map to render the terrain. I'm using my own textures that turned out ok.
+https://github.com/aod6060/d3d11_examples/tree/master/code/terrain_mt
