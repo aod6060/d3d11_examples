@@ -17,10 +17,18 @@ void AppTest::init()
 	this->initMesh();
 
 	example.init("data/terrain_mt/textures/example.png");
-	sand.init("data/terrain_mt/textures/sand.png");
+	//sand.init("data/terrain_mt/textures/sand.png");
+
+	// Terrain Textures
+	blendMap.init("data/terrain_mt/terrain/blend_map.png");
+
+	channelBlack.init("data/terrain_mt/textures/rock.png");
+	channelRed.init("data/terrain_mt/textures/sand.png");
+	channelGreen.init("data/terrain_mt/textures/thick_grass.png");
+	channelBlue.init("data/terrain_mt/textures/grass.png");
 
 	terrainShader.init();
-	terrain.init("data/terrain_mt/textures/height_map_island.png");
+	terrain.init("data/terrain_mt/terrain/height_map_island.png");
 
 	// Create Const VS
 	constVSBuf.init();
@@ -105,7 +113,14 @@ void AppTest::render()
 	terrainShader.bind();
 	terrainShader.setVSConstBuffer(this->constVSBuf.buf, 0);
 
-	sand.bind(0);
+	//sand.bind(0);
+
+	terrainShader.setBlendMap(this->blendMap);
+	terrainShader.setChannelBlack(this->channelBlack);
+	terrainShader.setChannelRed(this->channelRed);
+	terrainShader.setChannelGreen(this->channelGreen);
+	terrainShader.setChannelBlue(this->channelBlue);
+
 	terrainShader.setPSConstBuffer(this->constPSBuf.buf, 0);
 
 	constVS.model =
@@ -173,7 +188,13 @@ void AppTest::release()
 	}
 	constPSBuf.release();
 	constVSBuf.release();
-	sand.release();
+
+	channelBlue.release();
+	channelGreen.release();
+	channelRed.release();
+	channelBlack.release();
+	blendMap.release();
+
 	example.release();
 	terrain.release();
 	terrainShader.release();
@@ -205,12 +226,4 @@ void AppTest::releaseMesh()
 	cylender.release();
 	sphere.release();
 	cube.release();
-}
-
-void AppTest::updateConstBuffer(ID3D11Buffer* cBuf, void* data, size_t size)
-{
-	D3D11_MAPPED_SUBRESOURCE mapped = {};
-	rend_getContext()->Map(cBuf, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped);
-	memcpy(mapped.pData, data, size);
-	rend_getContext()->Unmap(cBuf, 0);
 }

@@ -50,6 +50,12 @@ struct TerrainShader
 	void setPSShaderResources(ID3D11ShaderResourceView* resource, int inputSlot);
 	void setPSSamplers(ID3D11SamplerState* samplers, int inputSlot);
 
+	void setBlendMap(Texture2D& blendMap);
+	void setChannelBlack(Texture2D& channelBlack);
+	void setChannelRed(Texture2D& channelRed);
+	void setChannelGreen(Texture2D& channelGreen);
+	void setChannelBlue(Texture2D& channelBlue);
+
 	void bind();
 
 	void render(Terrain& terrain);

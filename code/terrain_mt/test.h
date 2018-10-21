@@ -32,6 +32,13 @@ private:
 	// Terrain
 	Terrain terrain;
 
+	// Terrain Textures
+	Texture2D blendMap;
+	Texture2D channelBlack;
+	Texture2D channelRed;
+	Texture2D channelGreen;
+	Texture2D channelBlue;
+
 	// Mesh Shader
 	MeshShader meshShader;
 
@@ -41,6 +48,9 @@ private:
 	Mesh cylender;
 	Mesh torus;
 	Mesh monkey;
+
+	// Texture
+	Texture2D example;
 
 	std::vector<Mesh*> meshes;
 	uint32_t amount = 0;
@@ -60,14 +70,11 @@ private:
 	D3D11_VIEWPORT viewport = {};
 	// Rotation Values
 	float yrot = 0.0f;
-	// Texture
-	Texture2D example;
-	Texture2D sand;
+	
+	//Texture2D sand;
 
 	void initMesh();
 	void releaseMesh();
-
-	void updateConstBuffer(ID3D11Buffer* cBuf, void* data, size_t size);
 
 public:
 	virtual void init();

@@ -189,3 +189,28 @@ void TerrainShader::render(Terrain& terrain)
 {
 	terrain.render();
 }
+
+void TerrainShader::setBlendMap(Texture2D& blendMap)
+{
+	blendMap.bind(0);
+}
+
+void TerrainShader::setChannelBlack(Texture2D& channelBlack)
+{
+	channelBlack.bind(1);
+}
+
+void TerrainShader::setChannelRed(Texture2D& channelRed)
+{
+	channelRed.bind(2);
+}
+
+void TerrainShader::setChannelGreen(Texture2D& channelGreen)
+{
+	channelGreen.bind(3);
+}
+
+void TerrainShader::setChannelBlue(Texture2D& channelBlue)
+{
+	channelBlue.bind(4);
+}
