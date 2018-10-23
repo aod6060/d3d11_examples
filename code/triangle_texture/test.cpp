@@ -410,11 +410,6 @@ void AppTest::initTextures()
 
 	uint32_t rowPitch = (imageData.width * 4) * sizeof(uint8_t);
 
-	D3D11_SUBRESOURCE_DATA resData = {};
-	resData.pSysMem = imageData.pixels;
-	resData.SysMemPitch = rowPitch;
-	resData.SysMemSlicePitch = 0;
-
 	r = rend_getDevice()->CreateTexture2D(
 		&texDesc,
 		nullptr, //&resData,
@@ -449,24 +444,6 @@ void AppTest::initTextures()
 	}
 
 	rend_getContext()->GenerateMips(this->exampleTex0);
-
-	/*
-	r = D3DX11CreateShaderResourceViewFromFile(
-		rend_getDevice(),
-		"data/triangle_texture/example.png",
-		nullptr,
-		nullptr,
-		&this->exampleTex0,
-		nullptr
-	);
-
-	if (FAILED(r))
-	{
-		std::cout << "Failed to load shader resource view" << std::endl;
-		throw std::runtime_error("");
-	}
-	*/
-
 
 	D3D11_SAMPLER_DESC sampDesc = {};
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;

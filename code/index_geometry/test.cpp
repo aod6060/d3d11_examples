@@ -421,13 +421,51 @@ void AppTest::initTextures()
 {
 	HRESULT r;
 
-	r = D3DX11CreateShaderResourceViewFromFile(
-		rend_getDevice(),
-		"data/triangle_texture/example.png",
-		nullptr,
-		nullptr,
-		&this->exampleTex0,
-		nullptr
+	ImageData imageData;
+
+	img_load("data/index_geom/example.png", &imageData);
+
+	// Create Texture 2D
+	D3D11_TEXTURE2D_DESC texDesc = {};
+	texDesc.Width = imageData.width;
+	texDesc.Height = imageData.height;
+	texDesc.MipLevels = 0;
+	texDesc.ArraySize = 1;
+	texDesc.CPUAccessFlags = 0;
+	texDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	texDesc.SampleDesc.Count = 1;
+	texDesc.SampleDesc.Quality = 0;
+	texDesc.Usage = D3D11_USAGE_DEFAULT;
+	texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+	texDesc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
+
+	uint32_t rowPitch = (imageData.width * 4) * sizeof(uint8_t);
+
+	r = rend_getDevice()->CreateTexture2D(
+		&texDesc,
+		nullptr, //&resData,
+		&this->exampleTex
+	);
+
+	if (FAILED(r))
+	{
+		std::cout << "Faield to create exampleTex" << std::endl;
+		throw std::runtime_error("");
+	}
+
+	rend_getContext()->UpdateSubresource(exampleTex, 0, nullptr, imageData.pixels, rowPitch, 0);
+
+	// Create Shader Resource View
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderViewDesc = {};
+	shaderViewDesc.Format = texDesc.Format;
+	shaderViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderViewDesc.Texture2D.MipLevels = -1;
+	shaderViewDesc.Texture2D.MostDetailedMip = 0;
+
+	r = rend_getDevice()->CreateShaderResourceView(
+		this->exampleTex,
+		&shaderViewDesc,
+		&this->exampleTex0
 	);
 
 	if (FAILED(r))
@@ -435,6 +473,8 @@ void AppTest::initTextures()
 		std::cout << "Failed to load shader resource view" << std::endl;
 		throw std::runtime_error("");
 	}
+
+	rend_getContext()->GenerateMips(this->exampleTex0);
 
 	D3D11_SAMPLER_DESC sampDesc = {};
 	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -452,6 +492,8 @@ void AppTest::initTextures()
 		std::cout << "Falied to create sampler state..." << std::endl;
 		throw std::runtime_error("");
 	}
+
+	img_unload(&imageData);
 }
 
 void AppTest::releaseTextures()
