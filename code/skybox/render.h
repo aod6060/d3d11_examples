@@ -65,6 +65,7 @@ struct ConstBuffer
 
 struct Texture2D
 {
+	ID3D11Texture2D* tex = nullptr;
 	ID3D11ShaderResourceView* resView = nullptr;
 	ID3D11SamplerState* sampState = nullptr;
 
@@ -72,4 +73,29 @@ struct Texture2D
 	void release();
 
 	void bind(int inputState);
+};
+
+struct ImageInfo
+{
+	void* pixels;
+	uint32_t rowPitch;
+	uint32_t width;
+	uint32_t height;
+};
+
+struct CubeMap
+{
+	ID3D11Texture2D* texture = nullptr;
+	ID3D11ShaderResourceView* shaderRes = nullptr;
+	ID3D11SamplerState* sampState = nullptr;
+
+	// Takes in a vector with size of 6
+	void init(std::vector<std::string>& paths);
+	void release();
+
+	void bind(int inputState);
+
+	void loadImageInfo(ImageInfo* imageInfo, std::string path);
+
+
 };

@@ -48,6 +48,7 @@ private:
 	// Rotation Values
 	float yrot = 0.0f;
 	// Texture
+	ID3D11Texture2D* exampleTex = nullptr;
 	ID3D11ShaderResourceView* exampleTex0 = nullptr;
 	ID3D11SamplerState* exampleSampState = nullptr;
 

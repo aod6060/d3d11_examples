@@ -30,6 +30,7 @@ void AppTest::init()
 	terrainShader.init();
 	terrain.init("data/skybox/terrain/height_map_island.png");
 
+	
 	// Create Const VS
 	constVSBuf.init();
 	// Create Const PS
