@@ -65,6 +65,7 @@ struct ConstBuffer
 
 struct Texture2D
 {
+	ID3D11Texture2D* tex = nullptr;
 	ID3D11ShaderResourceView* resView = nullptr;
 	ID3D11SamplerState* sampState = nullptr;
 

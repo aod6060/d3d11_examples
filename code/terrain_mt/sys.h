@@ -31,6 +31,7 @@
 
 #include "app.h"
 #include "input.h"
+#include "image_loader.h"
 #include "render.h"
 #include "terrain.h"
 #include "mesh.h"
